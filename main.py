@@ -6,7 +6,7 @@ model_large = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
 model_small = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
 classifier = pipeline("zero-shot-classification",model="facebook/bart-large-mnli")
 question_answerer = pipeline("question-answering", model='distilbert-base-cased-distilled-squad')
-
+model = AutoModelForSeq2SeqLM.from_pretrained("nsi319/legal-pegasus")
 
 
 def create_arguments(text1):
@@ -53,6 +53,18 @@ def question_answerer(question,text):
 
     return f"Answer: '{result['answer']}', score: {round(result['score'], 4)}, start: {result['start']}, end: {result['end']}"
 
+
+def facts_retriever(text):
+
+    input_tokenized = tokenizer.encode(text, return_tensors='pt', max_length=1024, truncation=True)
+    summary_ids = model.generate(input_tokenized,
+                                 num_beams=9,
+                                 no_repeat_ngram_size=3,
+                                 length_penalty=2.0,
+                                 min_length=150,
+                                 max_length=250,
+                                 early_stopping=True)
+    summary = [tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in summary_ids][0]
 
 # def involve_text(text1):
 #     text = "Who is guilty in this case legally?: " + text1
